@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "pythonproject11"
+version = "0.1.0"
+description = ""
+authors = ["Eugen <trushin00332211@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.14"
+django = "^6.1"
+djangorestframework = "^3.18.0"
+pillow = "^12.3.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
