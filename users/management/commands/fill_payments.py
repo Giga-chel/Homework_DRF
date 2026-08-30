@@ -1,17 +1,15 @@
 from django.core.management.base import BaseCommand
 from users.models import User, Payment
 from lms.models import Course, Lesson
-from datetime import datetime
 
 
 class Command(BaseCommand):
     help = 'Заполняет таблицу платежей тестовыми данными'
 
     def handle(self, *args, **options):
-        user, _ = User.objects.get_or_create(
-            email='test@example.com',
-            defaults={'password': '12345'}
-        )
+        user = User.objects.filter(email='test@example.com').first()
+        if user is None:
+            user = User.objects.create_user(email='test@example.com', password='12345')
 
         course, _ = Course.objects.get_or_create(
             name='Тестовый курс',

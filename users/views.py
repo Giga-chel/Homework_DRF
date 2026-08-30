@@ -12,9 +12,8 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
-    queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
-
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
 
     filterset_fields = {
@@ -25,6 +24,9 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     ordering_fields = ['payment_date']
     ordering = ['-payment_date']
+
+    def get_queryset(self):
+        return Payment.objects.filter(user=self.request.user)
 
 
 class UserProfileAPIView(generics.RetrieveAPIView):
