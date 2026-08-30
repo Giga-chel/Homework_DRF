@@ -1,14 +1,22 @@
-from rest_framework import viewsets, generics
-from rest_framework.permissions import IsAuthenticated
 from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter
-from .models import User, Payment
-from .serializers import UserSerializer, PaymentSerializer, UserProfileSerializer
+from rest_framework.permissions import AllowAny, IsAuthenticated
+
+from .models import Payment, User
+from .serializers import PaymentSerializer, UserProfileSerializer, UserSerializer
 
 
 class UserViewSet(viewsets.ModelViewSet):
+    """CRUD пользователей. create — регистрация, доступна без токена."""
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [AllowAny()]
+        return [IsAuthenticated()]
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
