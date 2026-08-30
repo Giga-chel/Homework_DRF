@@ -10,6 +10,7 @@ python = "^3.14"
 django = "^6.1"
 djangorestframework = "^3.18.0"
 pillow = "^12.3.0"
+django-filter = "^26.1"
 
 
 [build-system]
