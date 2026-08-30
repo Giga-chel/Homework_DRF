@@ -34,3 +34,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         exclude = ['password', 'last_login', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
+
+class UserPublicSerializer(serializers.ModelSerializer):
+    """Общая информация о пользователе — для просмотра чужих профилей.
+
+    Без пароля, фамилии и истории платежей.
+    """
+
+    class Meta:
+        model = User
+        fields = ['id', 'email', 'first_name', 'phone', 'city', 'avatar']

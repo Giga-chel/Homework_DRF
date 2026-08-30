@@ -5,10 +5,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from .models import Payment, User
 from .serializers import PaymentSerializer, UserProfileSerializer, UserSerializer
+from users.permissions import IsUserProfileOwner
 
 
 class UserViewSet(viewsets.ModelViewSet):
-    """CRUD пользователей. create — регистрация, доступна без токена."""
+    """CRUD пользователей. create — регистрация (без токена)."""
 
     queryset = User.objects.all()
     serializer_class = UserSerializer
@@ -16,7 +17,21 @@ class UserViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action == 'create':
             return [AllowAny()]
+        if self.action in ('update', 'partial_update', 'destroy'):
+            # редактировать и удалять профиль может только его владелец
+            return [IsAuthenticated(), IsUserProfileOwner()]
         return [IsAuthenticated()]
+
+    def get_serializer_class(self):
+        if self.action == 'list':
+            # в списке — только общая информация
+            return UserPublicSerializer
+        if self.action == 'retrieve':
+            # свой профиль — полная информация, чужой — только общая
+            if self.get_object() == self.request.user:
+                return UserProfileSerializer
+            return UserPublicSerializer
+        return UserSerializer
 
 
 class PaymentViewSet(viewsets.ModelViewSet):
