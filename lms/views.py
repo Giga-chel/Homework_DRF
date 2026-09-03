@@ -9,6 +9,7 @@ from users.permissions import IsModerator, is_moderator
 from .models import Course, Lesson, Subscription
 from .permissions import IsOwner
 from .serializers import CourseSerializer, LessonSerializer
+from .paginators import CourseLessonPagination
 
 
 class OwnerQuerysetMixin:
@@ -25,6 +26,7 @@ class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated]  # list / retrieve
+    pagination_class = CourseLessonPagination
 
     def get_permissions(self):
         if self.action == 'create':
@@ -43,6 +45,7 @@ class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CourseLessonPagination
 
 
 # ListCreateAPIView обрабатывает GET (список) и POST (создание)
