@@ -17,3 +17,18 @@ djangorestframework-simplejwt = "^5.5.1"
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "coverage (>=7.16.0,<8.0.0)"
+]
+
+[tool.coverage.run]
+source = ["config", "lms", "users"]
+omit = [
+    "*/migrations/*",
+    "*/tests.py",
+]
+
+[tool.coverage.report]
+show_missing = true
