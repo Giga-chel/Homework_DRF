@@ -3,9 +3,15 @@ from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from .models import Payment, User
-from .serializers import PaymentSerializer, UserProfileSerializer, UserSerializer
+
 from users.permissions import IsUserProfileOwner
+from .models import Payment, User
+from .serializers import (
+    PaymentSerializer,
+    UserPublicSerializer,
+    UserProfileSerializer,
+    UserSerializer,
+)
 
 
 class UserViewSet(viewsets.ModelViewSet):
