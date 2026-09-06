@@ -2,6 +2,7 @@ from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from drf_spectacular.utils import extend_schema_view, extend_schema
 
 
 from users.permissions import IsUserProfileOwner
@@ -14,6 +15,21 @@ from .serializers import (
 )
 
 
+@extend_schema_view(
+    create=extend_schema(
+        auth=[],
+        summary='Регистрация пользователя',
+        description='Доступна без авторизации. Пароль хешируется, в ответ не возвращается.',
+    ),
+    list=extend_schema(
+        summary='Список пользователей (общая информация)',
+        responses={200: UserPublicSerializer(many=True)},
+    ),
+    retrieve=extend_schema(summary='Профиль пользователя'),
+    update=extend_schema(summary='Полное обновление своего профиля'),
+    partial_update=extend_schema(summary='Частичное обновление своего профиля'),
+    destroy=extend_schema(summary='Удаление своего профиля'),
+)
 class UserViewSet(viewsets.ModelViewSet):
     """CRUD пользователей. create — регистрация (без токена)."""
 
