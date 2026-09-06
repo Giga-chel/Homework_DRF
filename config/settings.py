@@ -44,6 +44,8 @@ INSTALLED_APPS = [
     'users',
     'lms',
     'django_filters',
+    'drf_spectacular',
+    'drf_spectacular_sidecar',
 ]
 
 MIDDLEWARE = [
@@ -143,6 +145,7 @@ REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
     'DEFAULT_FILTER_BACKENDS': [
         'django_filters.rest_framework.DjangoFilterBackend',
         'rest_framework.filters.OrderingFilter',
@@ -154,3 +157,22 @@ SIMPLE_JWT = {
     'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_HEADER_TYPES': ('Bearer',),
 }
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API учебной платформы (LMS)',
+    'DESCRIPTION': 'Курсы, уроки, подписки, платежи (Stripe), пользователи.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    'SWAGGER_UI_SETTINGS': {
+        'persistAuthorization': True,
+    },
+    'SWAGGER_UI_DIST': 'SIDECAR',
+    'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
+    'REDOC_DIST': 'SIDECAR',
+}
+
+# Stripe
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_ВСТАВЬТЕ_СЮДА_СВОЙ_КЛЮЧ')
+STRIPE_CURRENCY = 'usd'  # Stripe не поддерживает RUB; сумма передаётся в минорных единицах (центах)
+STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/'
+STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/'
