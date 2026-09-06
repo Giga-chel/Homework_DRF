@@ -170,3 +170,9 @@ SPECTACULAR_SETTINGS = {
     'SWAGGER_UI_FAVICON_HREF': 'SIDECAR',
     'REDOC_DIST': 'SIDECAR',
 }
+
+# Stripe
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_ВСТАВЬТЕ_СЮДА_СВОЙ_КЛЮЧ')
+STRIPE_CURRENCY = 'usd'  # Stripe не поддерживает RUB; сумма передаётся в минорных единицах (центах)
+STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/'
+STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/'

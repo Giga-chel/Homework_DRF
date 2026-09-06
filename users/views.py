@@ -1,35 +1,27 @@
+import stripe
+from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, generics
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, viewsets, generics
 from rest_framework.filters import OrderingFilter
 from rest_framework.permissions import AllowAny, IsAuthenticated
-from drf_spectacular.utils import extend_schema_view, extend_schema
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
-
+from lms.models import Course
 from users.permissions import IsUserProfileOwner
+from . import services
 from .models import Payment, User
 from .serializers import (
+    PaymentCreateRequestSerializer,
     PaymentSerializer,
-    UserPublicSerializer,
+    PaymentStatusSerializer,
     UserProfileSerializer,
+    UserPublicSerializer,
     UserSerializer,
 )
 
 
-@extend_schema_view(
-    create=extend_schema(
-        auth=[],
-        summary='Регистрация пользователя',
-        description='Доступна без авторизации. Пароль хешируется, в ответ не возвращается.',
-    ),
-    list=extend_schema(
-        summary='Список пользователей (общая информация)',
-        responses={200: UserPublicSerializer(many=True)},
-    ),
-    retrieve=extend_schema(summary='Профиль пользователя'),
-    update=extend_schema(summary='Полное обновление своего профиля'),
-    partial_update=extend_schema(summary='Частичное обновление своего профиля'),
-    destroy=extend_schema(summary='Удаление своего профиля'),
-)
 class UserViewSet(viewsets.ModelViewSet):
     """CRUD пользователей. create — регистрация (без токена)."""
 
@@ -56,7 +48,75 @@ class UserViewSet(viewsets.ModelViewSet):
         return UserSerializer
 
 
-class PaymentViewSet(viewsets.ModelViewSet):
+class PaymentCreateAPIView(APIView):
+    """Создание платежа: продукт + цена + сессия в Stripe, в ответе — ссылка на оплату."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(
+        request=PaymentCreateRequestSerializer,
+        responses={201: PaymentSerializer},
+        tags=['payments'],
+    )
+    def post(self, request, *args, **kwargs):
+        serializer = PaymentCreateRequestSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        course_id = serializer.validated_data['course_id']
+
+        course = get_object_or_404(Course, pk=course_id)
+        if not course.price or course.price <= 0:
+            return Response(
+                {'error': 'У курса не задана цена'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            product = services.create_product(course.name)
+            price = services.create_price(product.id, course.price)
+            session = services.create_checkout_session(price.id)
+        except stripe.StripeError as exc:
+            return Response(
+                {'error': f'Ошибка платёжного сервиса Stripe: {exc}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+
+        payment = Payment.objects.create(
+            user=request.user,
+            paid_course=course,
+            payment_amount=course.price,
+            payment_method='transfer',
+            session_id=session.id,
+            payment_link=session.url,
+        )
+        return Response(PaymentSerializer(payment).data, status=status.HTTP_201_CREATED)
+
+
+class PaymentStatusAPIView(APIView):
+    """Доп. задание: статус платежа в Stripe по id сессии."""
+
+    permission_classes = [IsAuthenticated]
+
+    @extend_schema(responses=PaymentStatusSerializer, tags=['payments'])
+    def get(self, request, session_id, *args, **kwargs):
+        # статус отдаём только по собственным платежам
+        get_object_or_404(Payment, session_id=session_id, user=request.user)
+        try:
+            session = services.retrieve_session(session_id)
+        except stripe.StripeError as exc:
+            return Response(
+                {'error': f'Ошибка платёжного сервиса Stripe: {exc}'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response({
+            'session_id': session.id,
+            'payment_status': session.payment_status,
+            'status': session.status,
+        })
+
+
+class PaymentViewSet(viewsets.ReadOnlyModelViewSet):
+    """Платежи только для чтения: создание — через /payments/create/ (Stripe)."""
+
     serializer_class = PaymentSerializer
     permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
