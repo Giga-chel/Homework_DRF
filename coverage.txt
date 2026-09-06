@@ -1,0 +1,30 @@
+﻿Name                                         Stmts   Miss  Cover   Missing
+--------------------------------------------------------------------------
+config\__init__.py                               0      0   100%
+config\asgi.py                                   4      4     0%   10-16
+config\settings.py                              25      0   100%
+config\urls.py                                   7      1    86%   30
+config\wsgi.py                                   4      4     0%   10-16
+lms\__init__.py                                  0      0   100%
+lms\admin.py                                     1      0   100%
+lms\apps.py                                      3      0   100%
+lms\models.py                                   34      3    91%   23, 46, 74
+lms\paginators.py                                5      0   100%
+lms\permissions.py                               5      0   100%
+lms\serializers.py                              24      1    96%   31
+lms\urls.py                                      6      0   100%
+lms\validators.py                               14      0   100%
+lms\views.py                                    72      0   100%
+users\__init__.py                                0      0   100%
+users\admin.py                                   1      0   100%
+users\apps.py                                    3      0   100%
+users\management\__init__.py                     0      0   100%
+users\management\commands\__init__.py            0      0   100%
+users\management\commands\fill_payments.py      15     15     0%   1-39
+users\models.py                                 47     10    79%   8, 16-24, 44, 65
+users\permissions.py                            16      1    94%   30
+users\serializers.py                            29      2    93%   20-21
+users\urls.py                                    8      0   100%
+users\views.py                                  38      0   100%
+--------------------------------------------------------------------------
+TOTAL                                          361     41    89%

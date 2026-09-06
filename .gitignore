@@ -226,3 +226,6 @@ Thumbs.db
 # IDE
 *.swp
 *.swo
+
+.coverage
+htmlcov/
