@@ -8,12 +8,14 @@ from .views import (
     LessonListAPIView,
     LessonRetrieveAPIView,
     LessonUpdateAPIView,
+    SubscriptionAPIView,
 )
 
 router = DefaultRouter()
 router.register(r'courses', CourseViewSet, basename='courses')
 
 urlpatterns = [
+    path('courses/subscribe/', SubscriptionAPIView.as_view(), name='subscription-toggle'),
     path('', include(router.urls)),
     path('lessons/', LessonListAPIView.as_view(), name='lesson-list'),
     path('lessons/create/', LessonCreateAPIView.as_view(), name='lesson-create'),

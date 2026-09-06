@@ -1,11 +1,15 @@
-from rest_framework import generics, viewsets
+from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework import generics, viewsets, status
 from rest_framework.permissions import IsAuthenticated
 
 from users.permissions import IsModerator, is_moderator
 
-from .models import Course, Lesson
+from .models import Course, Lesson, Subscription
 from .permissions import IsOwner
 from .serializers import CourseSerializer, LessonSerializer
+from .paginators import CourseLessonPagination
 
 
 class OwnerQuerysetMixin:
@@ -22,6 +26,7 @@ class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
     permission_classes = [IsAuthenticated]  # list / retrieve
+    pagination_class = CourseLessonPagination
 
     def get_permissions(self):
         if self.action == 'create':
@@ -40,6 +45,7 @@ class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated]
+    pagination_class = CourseLessonPagination
 
 
 # ListCreateAPIView обрабатывает GET (список) и POST (создание)
@@ -69,3 +75,36 @@ class LessonDestroyAPIView(OwnerQuerysetMixin, generics.DestroyAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+
+class SubscriptionAPIView(APIView):
+    """Переключатель подписки: подписка есть — удаляем, нет — создаём."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        course_id = request.data.get('course_id')
+        if not course_id:
+            return Response(
+                {'error': 'Укажите course_id'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            course_item = get_object_or_404(Course, pk=course_id)
+        except (ValueError, TypeError):
+            return Response(
+                {'error': 'Некорректный course_id'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        subs_item = Subscription.objects.filter(user=user, course=course_item)
+
+        if subs_item.exists():
+            subs_item.delete()
+            message = 'подписка удалена'
+        else:
+            Subscription.objects.create(user=user, course=course_item)
+            message = 'подписка добавлена'
+
+        return Response({'message': message})
