@@ -1,3 +1,5 @@
+from drf_spectacular.types import OpenApiTypes
+from drf_spectacular.utils import extend_schema_field
 from rest_framework import serializers
 
 from .models import Course, Lesson, Subscription
@@ -12,25 +14,6 @@ class LessonSerializer(serializers.ModelSerializer):
         validators = [YouTubeLinkValidator(field='video_url')]
 
 
-class CourseSerializer(serializers.ModelSerializer):
-    lessons_count = serializers.SerializerMethodField()
-    lessons = LessonSerializer(many=True, read_only=True)
-    is_subscribed = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Course
-        fields = '__all__'
-        extra_kwargs = {'owner': {'read_only': True}}
-
-    def get_lessons_count(self, obj):
-        return obj.lessons.count()
-
-    def get_is_subscribed(self, obj):
-        request = self.context.get('request')
-        if request is None or not request.user.is_authenticated:
-            return False
-        return Subscription.objects.filter(user=request.user, course=obj).exists()
-
 class SubscriptionRequestSerializer(serializers.Serializer):
     """Тело запроса переключения подписки."""
 
@@ -41,3 +24,25 @@ class SubscriptionResponseSerializer(serializers.Serializer):
     """Ответ эндпоинта подписки."""
 
     message = serializers.CharField(help_text='подписка добавлена / подписка удалена')
+
+
+class CourseSerializer(serializers.ModelSerializer):
+    lessons_count = serializers.SerializerMethodField()
+    lessons = LessonSerializer(many=True, read_only=True)
+    is_subscribed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Course
+        fields = '__all__'
+        extra_kwargs = {'owner': {'read_only': True}}
+
+    @extend_schema_field(OpenApiTypes.INT)
+    def get_lessons_count(self, obj):
+        return obj.lessons.count()
+
+    @extend_schema_field(OpenApiTypes.BOOL)
+    def get_is_subscribed(self, obj):
+        request = self.context.get('request')
+        if request is None or not request.user.is_authenticated:
+            return False
+        return Subscription.objects.filter(user=request.user, course=obj).exists()

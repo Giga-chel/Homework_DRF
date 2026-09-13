@@ -27,8 +27,11 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = '__all__'
         extra_kwargs = {
+            'product_id': {'read_only': True},
+            'price_id': {'read_only': True},
             'session_id': {'read_only': True},
             'payment_link': {'read_only': True},
+            'payment_status': {'read_only': True},
         }
 
 
@@ -39,10 +42,12 @@ class PaymentCreateRequestSerializer(serializers.Serializer):
 
 
 class PaymentStatusSerializer(serializers.Serializer):
-    """Ответ эндпоинта статуса платежа (для документации)."""
+    """Ответ эндпоинта статуса платежа."""
 
     session_id = serializers.CharField()
-    payment_status = serializers.CharField(help_text='unpaid / paid / no_payment_required')
+    payment_status = serializers.CharField(
+        help_text='unpaid / paid / no_payment_required — результат также сохраняется в модели Payment'
+    )
     status = serializers.CharField(help_text='open / complete / expired')
 
 

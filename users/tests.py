@@ -247,6 +247,9 @@ class PaymentCreateTests(APITestCase):
         payment = Payment.objects.get(user=self.user)
         self.assertEqual(payment.session_id, 'cs_test_1')
         self.assertEqual(payment.payment_amount, Decimal('1500.00'))
+        self.assertEqual(payment.product_id, 'prod_1')
+        self.assertEqual(payment.price_id, 'price_1')
+        self.assertEqual(payment.payment_status, 'unpaid')
 
     def test_course_without_price_returns_400(self):
         self.course.price = 0
@@ -274,6 +277,8 @@ class PaymentStatusTests(APITestCase):
             response = self.client.get(reverse('payment-status', kwargs={'session_id': 'cs_test_1'}))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['payment_status'], 'paid')
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.payment_status, 'paid')
 
     def test_other_users_session_returns_404(self):
         stranger = User.objects.create_user(email='stranger@example.com', password='12345qwe')

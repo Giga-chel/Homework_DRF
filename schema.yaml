@@ -7,7 +7,9 @@ paths:
   /api/courses/:
     get:
       operationId: courses_list
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: 'Модератору доступны все курсы, остальным — только собственные.
+        Пагинация: ?page, ?page_size (максимум 50).'
+      summary: Список курсов
       parameters:
       - name: ordering
         required: false
@@ -40,7 +42,9 @@ paths:
           description: ''
     post:
       operationId: courses_create
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно всем авторизованным, кроме модераторов. Владелец привязывается
+        автоматически.
+      summary: Создание курса
       tags:
       - courses
       requestBody:
@@ -64,10 +68,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+        '400':
+          description: Некорректные данные
+        '403':
+          description: Модераторам создание запрещено
   /api/courses/{id}/:
     get:
       operationId: courses_retrieve
       description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      summary: Детали курса
       parameters:
       - in: path
         name: id
@@ -86,9 +95,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+        '404':
+          description: Курс не найден или недоступен
     put:
       operationId: courses_update
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно модератору или владельцу.
+      summary: Полное обновление курса
       parameters:
       - in: path
         name: id
@@ -119,9 +131,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+        '403':
+          description: Пользователь не модератор и не владелец
+        '404':
+          description: Курс не найден или недоступен
     patch:
       operationId: courses_partial_update
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно модератору или владельцу.
+      summary: Частичное обновление курса
       parameters:
       - in: path
         name: id
@@ -151,9 +168,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Course'
           description: ''
+        '403':
+          description: Пользователь не модератор и не владелец
+        '404':
+          description: Курс не найден или недоступен
     delete:
       operationId: courses_destroy
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно только владельцу; модераторам удаление запрещено.
+      summary: Удаление курса
       parameters:
       - in: path
         name: id
@@ -167,7 +189,11 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Курс удалён
+        '403':
+          description: Пользователь не владелец курса
+        '404':
+          description: Курс не найден или недоступен
   /api/courses/subscribe/:
     post:
       operationId: courses_subscribe_create
@@ -195,10 +221,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/SubscriptionResponse'
           description: ''
+        '400':
+          description: Не указан или некорректный course_id
+        '401':
+          description: Требуется авторизация
+        '404':
+          description: Курс не найден
   /api/lessons/:
     get:
       operationId: lessons_list
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: 'Модератору доступны все уроки, остальным — только собственные.
+        Пагинация: ?page, ?page_size (максимум 50).'
+      summary: Список уроков
       parameters:
       - name: ordering
         required: false
@@ -233,6 +267,7 @@ paths:
     get:
       operationId: lessons_retrieve
       description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      summary: Детали урока
       parameters:
       - in: path
         name: id
@@ -250,10 +285,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lesson'
           description: ''
+        '404':
+          description: Урок не найден или недоступен
   /api/lessons/{id}/delete/:
     delete:
       operationId: lessons_delete_destroy
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно только владельцу урока.
+      summary: Удаление урока
       parameters:
       - in: path
         name: id
@@ -266,11 +304,16 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Урок удалён
+        '403':
+          description: Пользователь не владелец урока
+        '404':
+          description: Урок не найден или недоступен
   /api/lessons/{id}/update/:
     put:
       operationId: lessons_update_update
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно модератору или владельцу.
+      summary: Полное обновление урока
       parameters:
       - in: path
         name: id
@@ -300,9 +343,14 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lesson'
           description: ''
+        '403':
+          description: Пользователь не модератор и не владелец
+        '404':
+          description: Урок не найден или недоступен
     patch:
       operationId: lessons_update_partial_update
-      description: Модераторам отдаёт все объекты, остальным — только их собственные.
+      description: Доступно модератору или владельцу.
+      summary: Частичное обновление урока
       parameters:
       - in: path
         name: id
@@ -331,9 +379,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lesson'
           description: ''
+        '403':
+          description: Пользователь не модератор и не владелец
+        '404':
+          description: Урок не найден или недоступен
   /api/lessons/create/:
     post:
       operationId: lessons_create_create
+      description: Доступно всем авторизованным, кроме модераторов. Владелец привязывается
+        автоматически. Ссылка на видео — только youtube.com.
+      summary: Создание урока
       tags:
       - lessons
       requestBody:
@@ -357,9 +412,15 @@ paths:
               schema:
                 $ref: '#/components/schemas/Lesson'
           description: ''
+        '400':
+          description: Некорректные данные или запрещённая ссылка на видео
+        '403':
+          description: Модераторам создание запрещено
   /api/payments/:
     get:
       operationId: payments_list
+      description: 'Платежи только для чтения: создание — через /payments/create/
+        (Stripe).'
       parameters:
       - name: ordering
         required: false
@@ -380,21 +441,46 @@ paths:
                 items:
                   $ref: '#/components/schemas/Payment'
           description: ''
+  /api/payments/{id}/:
+    get:
+      operationId: payments_retrieve
+      description: 'Платежи только для чтения: создание — через /payments/create/
+        (Stripe).'
+      parameters:
+      - in: path
+        name: id
+        schema:
+          type: string
+        required: true
+      tags:
+      - payments
+      security:
+      - jwtAuth: []
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Payment'
+          description: ''
+  /api/payments/create/:
     post:
-      operationId: payments_create
+      operationId: payments_create_create
+      description: 'Создание платежа: продукт + цена + сессия в Stripe, в ответе —
+        ссылка на оплату.'
       tags:
       - payments
       requestBody:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Payment'
+              $ref: '#/components/schemas/PaymentCreateRequest'
           application/x-www-form-urlencoded:
             schema:
-              $ref: '#/components/schemas/Payment'
+              $ref: '#/components/schemas/PaymentCreateRequest'
           multipart/form-data:
             schema:
-              $ref: '#/components/schemas/Payment'
+              $ref: '#/components/schemas/PaymentCreateRequest'
         required: true
       security:
       - jwtAuth: []
@@ -405,12 +491,22 @@ paths:
               schema:
                 $ref: '#/components/schemas/Payment'
           description: ''
-  /api/payments/{id}/:
+        '400':
+          description: Некорректный course_id или у курса не задана цена
+        '401':
+          description: Требуется авторизация
+        '404':
+          description: Курс не найден
+        '502':
+          description: Ошибка платёжного сервиса Stripe
+  /api/payments/status/{session_id}/:
     get:
-      operationId: payments_retrieve
+      operationId: payments_status_retrieve
+      description: Статус платежа в Stripe по id сессии; статус сохраняется в модель
+        Payment.
       parameters:
       - in: path
-        name: id
+        name: session_id
         schema:
           type: string
         required: true
@@ -423,84 +519,14 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Payment'
+                $ref: '#/components/schemas/PaymentStatus'
           description: ''
-    put:
-      operationId: payments_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/Payment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/Payment'
-        required: true
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-    patch:
-      operationId: payments_partial_update
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-          application/x-www-form-urlencoded:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-          multipart/form-data:
-            schema:
-              $ref: '#/components/schemas/PatchedPayment'
-      security:
-      - jwtAuth: []
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Payment'
-          description: ''
-    delete:
-      operationId: payments_destroy
-      parameters:
-      - in: path
-        name: id
-        schema:
-          type: string
-        required: true
-      tags:
-      - payments
-      security:
-      - jwtAuth: []
-      responses:
-        '204':
-          description: No response body
+        '401':
+          description: Требуется авторизация
+        '404':
+          description: Платёж с такой сессией не найден
+        '502':
+          description: Ошибка платёжного сервиса Stripe
   /api/profile/:
     get:
       operationId: profile_retrieve
@@ -594,9 +620,11 @@ paths:
                 items:
                   $ref: '#/components/schemas/UserPublic'
           description: ''
+        '401':
+          description: Требуется авторизация
     post:
       operationId: users_create
-      description: Доступна без авторизации. Пароль хешируется, в ответ не возвращается.
+      description: Доступна без авторизации. Пароль хешируется и в ответе не возвращается.
       summary: Регистрация пользователя
       tags:
       - users
@@ -619,10 +647,13 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
+        '400':
+          description: Некорректные данные (email занят, пропущены поля)
   /api/users/{id}/:
     get:
       operationId: users_retrieve
-      description: CRUD пользователей. create — регистрация (без токена).
+      description: Для чужого профиля — только общая информация. Свой профиль возвращается
+        в полном виде (фамилия, история платежей).
       summary: Профиль пользователя
       parameters:
       - in: path
@@ -637,7 +668,15 @@ paths:
       - jwtAuth: []
       responses:
         '200':
-          description: No response body
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserPublic'
+          description: ''
+        '401':
+          description: Требуется авторизация
+        '404':
+          description: Пользователь не найден
     put:
       operationId: users_update
       description: CRUD пользователей. create — регистрация (без токена).
@@ -672,6 +711,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Редактировать можно только свой профиль
     patch:
       operationId: users_partial_update
       description: CRUD пользователей. create — регистрация (без токена).
@@ -705,6 +748,10 @@ paths:
               schema:
                 $ref: '#/components/schemas/User'
           description: ''
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Редактировать можно только свой профиль
     delete:
       operationId: users_destroy
       description: CRUD пользователей. create — регистрация (без токена).
@@ -722,7 +769,11 @@ paths:
       - jwtAuth: []
       responses:
         '204':
-          description: No response body
+          description: Профиль удалён
+        '401':
+          description: Требуется авторизация
+        '403':
+          description: Удалять можно только свой профиль
 components:
   schemas:
     Course:
@@ -732,7 +783,7 @@ components:
           type: integer
           readOnly: true
         lessons_count:
-          type: string
+          type: integer
           readOnly: true
         lessons:
           type: array
@@ -740,7 +791,7 @@ components:
             $ref: '#/components/schemas/Lesson'
           readOnly: true
         is_subscribed:
-          type: string
+          type: boolean
           readOnly: true
         name:
           type: string
@@ -755,6 +806,11 @@ components:
           type: string
           nullable: true
           title: Описание
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Цена
         owner:
           type: integer
           readOnly: true
@@ -861,7 +917,7 @@ components:
           type: integer
           readOnly: true
         lessons_count:
-          type: string
+          type: integer
           readOnly: true
         lessons:
           type: array
@@ -869,7 +925,7 @@ components:
             $ref: '#/components/schemas/Lesson'
           readOnly: true
         is_subscribed:
-          type: string
+          type: boolean
           readOnly: true
         name:
           type: string
@@ -884,6 +940,11 @@ components:
           type: string
           nullable: true
           title: Описание
+        price:
+          type: string
+          format: decimal
+          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
+          title: Цена
         owner:
           type: integer
           readOnly: true
@@ -925,37 +986,6 @@ components:
           readOnly: true
           nullable: true
           title: Владелец
-    PatchedPayment:
-      type: object
-      properties:
-        id:
-          type: integer
-          readOnly: true
-        payment_date:
-          type: string
-          format: date-time
-          readOnly: true
-          title: Дата оплаты
-        payment_amount:
-          type: string
-          format: decimal
-          pattern: ^-?\d{0,8}(?:\.\d{0,2})?$
-          title: Сумма оплаты
-        payment_method:
-          allOf:
-          - $ref: '#/components/schemas/PaymentMethodEnum'
-          title: Способ оплаты
-        user:
-          type: integer
-          title: Пользователь
-        paid_course:
-          type: integer
-          nullable: true
-          title: Оплаченный курс
-        paid_lesson:
-          type: integer
-          nullable: true
-          title: Оплаченный урок
     PatchedUser:
       type: object
       description: Регистрация и обновление пользователя. Пароль — только на вход.
@@ -1012,6 +1042,32 @@ components:
           allOf:
           - $ref: '#/components/schemas/PaymentMethodEnum'
           title: Способ оплаты
+        product_id:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Id продукта в Stripe
+        price_id:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Id цены в Stripe
+        session_id:
+          type: string
+          readOnly: true
+          nullable: true
+          title: Id сессии Stripe
+        payment_link:
+          type: string
+          format: uri
+          readOnly: true
+          nullable: true
+          title: Ссылка на оплату
+        payment_status:
+          allOf:
+          - $ref: '#/components/schemas/PaymentStatusEnum'
+          readOnly: true
+          title: Статус платежа
         user:
           type: integer
           title: Пользователь
@@ -1027,8 +1083,22 @@ components:
       - id
       - payment_amount
       - payment_date
+      - payment_link
       - payment_method
+      - payment_status
+      - price_id
+      - product_id
+      - session_id
       - user
+    PaymentCreateRequest:
+      type: object
+      description: Тело запроса на создание платежа (для документации).
+      properties:
+        course_id:
+          type: integer
+          description: id оплачиваемого курса
+      required:
+      - course_id
     PaymentMethodEnum:
       enum:
       - cash
@@ -1037,6 +1107,33 @@ components:
       description: |-
         * `cash` - Наличные
         * `transfer` - Перевод на счет
+    PaymentStatus:
+      type: object
+      description: Ответ эндпоинта статуса платежа.
+      properties:
+        session_id:
+          type: string
+        payment_status:
+          type: string
+          description: unpaid / paid / no_payment_required — результат также сохраняется
+            в модели Payment
+        status:
+          type: string
+          description: open / complete / expired
+      required:
+      - payment_status
+      - session_id
+      - status
+    PaymentStatusEnum:
+      enum:
+      - unpaid
+      - paid
+      - no_payment_required
+      type: string
+      description: |-
+        * `unpaid` - Не оплачен
+        * `paid` - Оплачен
+        * `no_payment_required` - Оплата не требуется
     SubscriptionRequest:
       type: object
       description: Тело запроса переключения подписки.
