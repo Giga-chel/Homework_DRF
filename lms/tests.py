@@ -2,7 +2,11 @@ from django.contrib.auth.models import Group
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
+from datetime import timedelta
+from unittest.mock import patch
 
+from django.utils import timezone
+from users.tasks import deactivate_inactive_users
 from lms.models import Course, Lesson, Subscription
 from users.models import User
 
@@ -316,3 +320,71 @@ class CourseCRUDTests(LmsBaseTestCase):
         self.client.force_authenticate(user=self.moderator)
         response = self.client.delete(reverse('courses-detail', kwargs={'pk': self.course.pk}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+
+class CourseUpdateNotificationTests(APITestCase):
+    """Рассылка писем подписчикам при обновлении курса (задание 2 + доп.)."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user(email='owner@example.com', password='12345qwe')
+        self.subscriber = User.objects.create_user(email='subscriber@example.com', password='12345qwe')
+        self.course = Course.objects.create(name='Тестовый курс', owner=self.owner)
+        Subscription.objects.create(user=self.subscriber, course=self.course)
+
+    def _patch_course(self):
+        self.client.force_authenticate(user=self.owner)
+        return self.client.patch(
+            reverse('courses-detail', kwargs={'pk': self.course.pk}),
+            {'name': 'Обновлённое название'},
+        )
+
+    def test_update_sends_email_to_subscriber(self):
+        # курс «не обновлялся» более 4 часов
+        Course.objects.filter(pk=self.course.pk).update(
+            updated_at=timezone.now() - timedelta(hours=5)
+        )
+        with patch('lms.tasks.send_mail') as mock_send_mail:
+            response = self._patch_course()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_mail.assert_called_once()
+        self.assertEqual(
+            mock_send_mail.call_args.kwargs['recipient_list'],
+            [self.subscriber.email],
+        )
+
+    def test_no_email_if_course_updated_recently(self):
+        # курс обновлялся час назад — письма быть не должно
+        Course.objects.filter(pk=self.course.pk).update(
+            updated_at=timezone.now() - timedelta(hours=1)
+        )
+        with patch('lms.tasks.send_mail') as mock_send_mail:
+            response = self._patch_course()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        mock_send_mail.assert_not_called()
+
+class DeactivateInactiveUsersTaskTests(APITestCase):
+    """Периодическая блокировка неактивных пользователей (задание 3)."""
+
+    def test_stale_user_is_deactivated(self):
+        active_user = User.objects.create_user(email='active@example.com', password='12345qwe')
+        stale_user = User.objects.create_user(email='stale@example.com', password='12345qwe')
+        User.objects.filter(pk=stale_user.pk).update(
+            last_login=timezone.now() - timedelta(days=40)
+        )
+
+        deactivate_inactive_users()  # вызываем функцию задачи напрямую
+
+        stale_user.refresh_from_db()
+        active_user.refresh_from_db()
+        self.assertFalse(stale_user.is_active)
+        self.assertTrue(active_user.is_active)
+
+    def test_blocked_user_cannot_obtain_token(self):
+        user = User.objects.create_user(email='stale@example.com', password='12345qwe')
+        User.objects.filter(pk=user.pk).update(last_login=timezone.now() - timedelta(days=40))
+        deactivate_inactive_users()
+
+        response = self.client.post(
+            reverse('token_obtain_pair'),
+            {'email': 'stale@example.com', 'password': '12345qwe'},
+        )
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
