@@ -4,10 +4,14 @@ from rest_framework import generics, status, viewsets
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from datetime import timedelta
+
+from django.utils import timezone
 
 from users.permissions import IsModerator, is_moderator
 
 from .models import Course, Lesson, Subscription
+from .tasks import send_course_update_notification
 from .paginators import CourseLessonPagination
 from .permissions import IsOwner
 from .serializers import (
@@ -95,6 +99,11 @@ class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
 
+    def perform_update(self, serializer):
+        if timezone.now() - serializer.instance.updated_at > timedelta(hours=4):
+            send_course_update_notification.delay(serializer.instance.pk)
+        serializer.save()
+
 
 @extend_schema_view(
     get=extend_schema(
@@ -147,7 +156,10 @@ class LessonRetrieveAPIView(OwnerQuerysetMixin, generics.RetrieveAPIView):
 @extend_schema_view(
     put=extend_schema(
         summary='Полное обновление урока',
-        description='Доступно модератору или владельцу.',
+        description=(
+            'Доступно модератору или владельцу. Обновление урока считается обновлением курса: '
+            'подписчикам уходит письмо, если курс не обновлялся более 4 часов.'
+        ),
         responses={
             200: LessonSerializer,
             403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
@@ -156,7 +168,10 @@ class LessonRetrieveAPIView(OwnerQuerysetMixin, generics.RetrieveAPIView):
     ),
     patch=extend_schema(
         summary='Частичное обновление урока',
-        description='Доступно модератору или владельцу.',
+        description=(
+            'Доступно модератору или владельцу. Обновление урока считается обновлением курса: '
+            'подписчикам уходит письмо, если курс не обновлялся более 4 часов.'
+        ),
         responses={
             200: LessonSerializer,
             403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
@@ -169,18 +184,15 @@ class LessonUpdateAPIView(OwnerQuerysetMixin, generics.UpdateAPIView):
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
+    def perform_update(self, serializer):
+        lesson = serializer.instance
+        course = lesson.course
 
-@extend_schema_view(
-    delete=extend_schema(
-        summary='Удаление урока',
-        description='Доступно только владельцу урока.',
-        responses={
-            204: OpenApiResponse(description='Урок удалён'),
-            403: OpenApiResponse(description='Пользователь не владелец урока'),
-            404: OpenApiResponse(description='Урок не найден или недоступен'),
-        },
-    ),
-)
+        if timezone.now() - course.updated_at > timedelta(hours=4):
+            send_course_update_notification.delay(course.pk)
+
+        serializer.save()
+        Course.objects.filter(pk=course.pk).update(updated_at=timezone.now())
 class LessonDestroyAPIView(OwnerQuerysetMixin, generics.DestroyAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
