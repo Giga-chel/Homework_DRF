@@ -11,21 +11,21 @@ lms\apps.py                                      3      0   100%
 lms\models.py                                   35      3    91%   24, 47, 75
 lms\paginators.py                                5      0   100%
 lms\permissions.py                               5      0   100%
-lms\serializers.py                              28      1    96%   31
+lms\serializers.py                              32      1    97%   47
 lms\urls.py                                      6      0   100%
 lms\validators.py                               14      0   100%
-lms\views.py                                    75      0   100%
+lms\views.py                                    80      0   100%
 users\__init__.py                                0      0   100%
 users\admin.py                                   1      0   100%
 users\apps.py                                    3      0   100%
 users\management\__init__.py                     0      0   100%
 users\management\commands\__init__.py            0      0   100%
 users\management\commands\fill_payments.py      15     15     0%   1-39
-users\models.py                                 49     10    80%   8, 16-24, 44, 67
+users\models.py                                 59     11    81%   8, 16-24, 44, 80, 88
 users\permissions.py                            16      1    94%   30
 users\serializers.py                            36      2    94%   20-21
 users\services.py                               11      4    64%   11, 19, 31, 41
 users\urls.py                                    8      0   100%
-users\views.py                                  73      4    95%   77-78, 105-106
+users\views.py                                  78      4    95%   139-140, 176-177
 --------------------------------------------------------------------------
-TOTAL                                          431     49    89%
+TOTAL                                          455     50    89%
