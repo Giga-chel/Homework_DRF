@@ -1,9 +1,12 @@
 from datetime import timedelta
+from decimal import Decimal
+from types import SimpleNamespace
 
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework import status
 from rest_framework.test import APITestCase
+from unittest.mock import patch
 
 from lms.models import Course
 from users.models import Payment, User
@@ -217,3 +220,63 @@ class ProfileAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], self.user.email)
         self.assertEqual(len(response.data['payments']), 1)
+
+class PaymentCreateTests(APITestCase):
+    """Создание платежа через Stripe (сервисные функции замоканы)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='buyer@example.com', password='12345qwe')
+        self.course = Course.objects.create(name='Курс', price='1500.00', owner=self.user)
+
+    def _post_create(self):
+        self.client.force_authenticate(user=self.user)
+        return self.client.post(reverse('payment-create'), {'course_id': self.course.pk})
+
+    def test_anonymous_cannot_create_payment(self):
+        response = self.client.post(reverse('payment-create'), {'course_id': self.course.pk})
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_create_payment_returns_link_and_saves_session(self):
+        with patch('users.services.create_product', return_value=SimpleNamespace(id='prod_1')), \
+             patch('users.services.create_price', return_value=SimpleNamespace(id='price_1')), \
+             patch('users.services.create_checkout_session',
+                   return_value=SimpleNamespace(id='cs_test_1', url='https://checkout.stripe.com/test')):
+            response = self._post_create()
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data['payment_link'], 'https://checkout.stripe.com/test')
+        payment = Payment.objects.get(user=self.user)
+        self.assertEqual(payment.session_id, 'cs_test_1')
+        self.assertEqual(payment.payment_amount, Decimal('1500.00'))
+
+    def test_course_without_price_returns_400(self):
+        self.course.price = 0
+        self.course.save()
+        response = self._post_create()
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class PaymentStatusTests(APITestCase):
+    """Проверка статуса сессии (retrieve замокан)."""
+
+    def setUp(self):
+        self.user = User.objects.create_user(email='me@example.com', password='12345qwe')
+        self.course = Course.objects.create(name='Курс', price='100.00', owner=self.user)
+        self.payment = Payment.objects.create(
+            user=self.user, paid_course=self.course,
+            payment_amount='100.00', payment_method='transfer',
+            session_id='cs_test_1',
+        )
+
+    def test_status_returns_paid(self):
+        self.client.force_authenticate(user=self.user)
+        with patch('users.services.retrieve_session',
+                   return_value=SimpleNamespace(id='cs_test_1', payment_status='paid', status='complete')):
+            response = self.client.get(reverse('payment-status', kwargs={'session_id': 'cs_test_1'}))
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['payment_status'], 'paid')
+
+    def test_other_users_session_returns_404(self):
+        stranger = User.objects.create_user(email='stranger@example.com', password='12345qwe')
+        self.client.force_authenticate(user=stranger)
+        response = self.client.get(reverse('payment-status', kwargs={'session_id': 'cs_test_1'}))
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

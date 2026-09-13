@@ -3,6 +3,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import generics, viewsets, status
 from rest_framework.permissions import IsAuthenticated
+from drf_spectacular.utils import extend_schema
+from lms.serializers import SubscriptionRequestSerializer, SubscriptionResponseSerializer
 
 from users.permissions import IsModerator, is_moderator
 
@@ -81,6 +83,11 @@ class SubscriptionAPIView(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    @extend_schema(
+        request=SubscriptionRequestSerializer,
+        responses={200: SubscriptionResponseSerializer},
+        tags=['subscriptions'],
+    )
     def post(self, request, *args, **kwargs):
         user = request.user
         course_id = request.data.get('course_id')

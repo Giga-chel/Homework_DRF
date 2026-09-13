@@ -26,6 +26,24 @@ class PaymentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
+        extra_kwargs = {
+            'session_id': {'read_only': True},
+            'payment_link': {'read_only': True},
+        }
+
+
+class PaymentCreateRequestSerializer(serializers.Serializer):
+    """Тело запроса на создание платежа (для документации)."""
+
+    course_id = serializers.IntegerField(help_text='id оплачиваемого курса')
+
+
+class PaymentStatusSerializer(serializers.Serializer):
+    """Ответ эндпоинта статуса платежа (для документации)."""
+
+    session_id = serializers.CharField()
+    payment_status = serializers.CharField(help_text='unpaid / paid / no_payment_required')
+    status = serializers.CharField(help_text='open / complete / expired')
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
