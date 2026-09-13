@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/6.1/ref/settings/
 """
 
 import os
+import sys
+
+from celery.schedules import crontab
 from pathlib import Path
 from datetime import timedelta
 
@@ -129,11 +132,6 @@ STATIC_URL = 'static/'
 # Email
 # https://docs.djangoproject.com/en/6.1/topics/email/#topic-email-configuration
 
-MAILERS = {
-    'default': {
-        'BACKEND': 'django.core.mail.backends.console.EmailBackend',
-    },
-}
 
 AUTH_USER_MODEL = 'users.User'
 
@@ -176,3 +174,26 @@ STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', 'sk_test_ВСТАВЬТ�
 STRIPE_CURRENCY = 'usd'  # Stripe не поддерживает RUB; сумма передаётся в минорных единицах (центах)
 STRIPE_SUCCESS_URL = 'http://127.0.0.1:8000/'
 STRIPE_CANCEL_URL = 'http://127.0.0.1:8000/'
+
+# ---------------- Email ----------------
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = 'noreply@lms.example'
+
+
+# ---------------- Celery / Redis ----------------
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/1')
+
+CELERY_TIMEZONE = TIME_ZONE
+CELERY_ENABLE_UTC = True
+
+CELERY_TASK_ALWAYS_EAGER = 'test' in sys.argv
+CELERY_TASK_EAGER_PROPAGATES = True
+
+CELERY_BEAT_SCHEDULE = {
+    'deactivate-inactive-users': {
+        'task': 'users.tasks.deactivate_inactive_users',
+        'schedule': crontab(hour=0, minute=0),
+    },
+}
