@@ -1,17 +1,21 @@
 from django.shortcuts import get_object_or_404
+from drf_spectacular.utils import OpenApiResponse, extend_schema, extend_schema_view
+from rest_framework import generics, status, viewsets
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework import generics, viewsets, status
-from rest_framework.permissions import IsAuthenticated
-from drf_spectacular.utils import extend_schema
-from lms.serializers import SubscriptionRequestSerializer, SubscriptionResponseSerializer
 
 from users.permissions import IsModerator, is_moderator
 
 from .models import Course, Lesson, Subscription
-from .permissions import IsOwner
-from .serializers import CourseSerializer, LessonSerializer
 from .paginators import CourseLessonPagination
+from .permissions import IsOwner
+from .serializers import (
+    CourseSerializer,
+    LessonSerializer,
+    SubscriptionRequestSerializer,
+    SubscriptionResponseSerializer,
+)
 
 
 class OwnerQuerysetMixin:
@@ -24,10 +28,59 @@ class OwnerQuerysetMixin:
         return queryset.filter(owner=self.request.user)
 
 
+@extend_schema_view(
+    list=extend_schema(
+        summary='Список курсов',
+        description='Модератору доступны все курсы, остальным — только собственные. Пагинация: ?page, ?page_size (максимум 50).',
+    ),
+    create=extend_schema(
+        summary='Создание курса',
+        description='Доступно всем авторизованным, кроме модераторов. Владелец привязывается автоматически.',
+        responses={
+            201: CourseSerializer,
+            400: OpenApiResponse(description='Некорректные данные'),
+            403: OpenApiResponse(description='Модераторам создание запрещено'),
+        },
+    ),
+    retrieve=extend_schema(
+        summary='Детали курса',
+        responses={
+            200: CourseSerializer,
+            404: OpenApiResponse(description='Курс не найден или недоступен'),
+        },
+    ),
+    update=extend_schema(
+        summary='Полное обновление курса',
+        description='Доступно модератору или владельцу.',
+        responses={
+            200: CourseSerializer,
+            403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
+            404: OpenApiResponse(description='Курс не найден или недоступен'),
+        },
+    ),
+    partial_update=extend_schema(
+        summary='Частичное обновление курса',
+        description='Доступно модератору или владельцу.',
+        responses={
+            200: CourseSerializer,
+            403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
+            404: OpenApiResponse(description='Курс не найден или недоступен'),
+        },
+    ),
+    destroy=extend_schema(
+        summary='Удаление курса',
+        description='Доступно только владельцу; модераторам удаление запрещено.',
+        responses={
+            204: OpenApiResponse(description='Курс удалён'),
+            403: OpenApiResponse(description='Пользователь не владелец курса'),
+            404: OpenApiResponse(description='Курс не найден или недоступен'),
+        },
+    ),
+)
 class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
-    permission_classes = [IsAuthenticated]  # list / retrieve
+    permission_classes = [IsAuthenticated]
     pagination_class = CourseLessonPagination
 
     def get_permissions(self):
@@ -43,6 +96,12 @@ class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
+@extend_schema_view(
+    get=extend_schema(
+        summary='Список уроков',
+        description='Модератору доступны все уроки, остальным — только собственные. Пагинация: ?page, ?page_size (максимум 50).',
+    ),
+)
 class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
@@ -50,7 +109,17 @@ class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
     pagination_class = CourseLessonPagination
 
 
-# ListCreateAPIView обрабатывает GET (список) и POST (создание)
+@extend_schema_view(
+    post=extend_schema(
+        summary='Создание урока',
+        description='Доступно всем авторизованным, кроме модераторов. Владелец привязывается автоматически. Ссылка на видео — только youtube.com.',
+        responses={
+            201: LessonSerializer,
+            400: OpenApiResponse(description='Некорректные данные или запрещённая ссылка на видео'),
+            403: OpenApiResponse(description='Модераторам создание запрещено'),
+        },
+    ),
+)
 class LessonCreateAPIView(generics.CreateAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
@@ -60,23 +129,63 @@ class LessonCreateAPIView(generics.CreateAPIView):
         serializer.save(owner=self.request.user)
 
 
-# RetrieveUpdateDestroyAPIView обрабатывает GET (одна сущность), PUT/PATCH (изменение) и DELETE (удаление)
+@extend_schema_view(
+    get=extend_schema(
+        summary='Детали урока',
+        responses={
+            200: LessonSerializer,
+            404: OpenApiResponse(description='Урок не найден или недоступен'),
+        },
+    ),
+)
 class LessonRetrieveAPIView(OwnerQuerysetMixin, generics.RetrieveAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated]
 
 
+@extend_schema_view(
+    put=extend_schema(
+        summary='Полное обновление урока',
+        description='Доступно модератору или владельцу.',
+        responses={
+            200: LessonSerializer,
+            403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
+            404: OpenApiResponse(description='Урок не найден или недоступен'),
+        },
+    ),
+    patch=extend_schema(
+        summary='Частичное обновление урока',
+        description='Доступно модератору или владельцу.',
+        responses={
+            200: LessonSerializer,
+            403: OpenApiResponse(description='Пользователь не модератор и не владелец'),
+            404: OpenApiResponse(description='Урок не найден или недоступен'),
+        },
+    ),
+)
 class LessonUpdateAPIView(OwnerQuerysetMixin, generics.UpdateAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsModerator | IsOwner]
 
 
+@extend_schema_view(
+    delete=extend_schema(
+        summary='Удаление урока',
+        description='Доступно только владельцу урока.',
+        responses={
+            204: OpenApiResponse(description='Урок удалён'),
+            403: OpenApiResponse(description='Пользователь не владелец урока'),
+            404: OpenApiResponse(description='Урок не найден или недоступен'),
+        },
+    ),
+)
 class LessonDestroyAPIView(OwnerQuerysetMixin, generics.DestroyAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer
     permission_classes = [IsAuthenticated, IsOwner]
+
 
 class SubscriptionAPIView(APIView):
     """Переключатель подписки: подписка есть — удаляем, нет — создаём."""
@@ -85,7 +194,12 @@ class SubscriptionAPIView(APIView):
 
     @extend_schema(
         request=SubscriptionRequestSerializer,
-        responses={200: SubscriptionResponseSerializer},
+        responses={
+            200: SubscriptionResponseSerializer,
+            400: OpenApiResponse(description='Не указан или некорректный course_id'),
+            401: OpenApiResponse(description='Требуется авторизация'),
+            404: OpenApiResponse(description='Курс не найден'),
+        },
         tags=['subscriptions'],
     )
     def post(self, request, *args, **kwargs):
