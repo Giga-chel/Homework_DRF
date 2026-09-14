@@ -1,20 +1,22 @@
 ﻿Name                                         Stmts   Miss  Cover   Missing
 --------------------------------------------------------------------------
-config\__init__.py                               0      0   100%
+config\__init__.py                               2      0   100%
 config\asgi.py                                   4      4     0%   10-16
-config\settings.py                              30      0   100%
+config\celery.py                                 6      0   100%
+config\settings.py                              40      0   100%
 config\urls.py                                   9      1    89%   42
 config\wsgi.py                                   4      4     0%   10-16
 lms\__init__.py                                  0      0   100%
 lms\admin.py                                     1      0   100%
 lms\apps.py                                      3      0   100%
-lms\models.py                                   35      3    91%   24, 47, 75
+lms\models.py                                   38      3    92%   26, 50, 78
 lms\paginators.py                                5      0   100%
 lms\permissions.py                               5      0   100%
 lms\serializers.py                              32      1    97%   47
+lms\tasks.py                                    14      1    93%   15
 lms\urls.py                                      6      0   100%
 lms\validators.py                               14      0   100%
-lms\views.py                                    80      0   100%
+lms\views.py                                    93      1    99%   192
 users\__init__.py                                0      0   100%
 users\admin.py                                   1      0   100%
 users\apps.py                                    3      0   100%
@@ -25,7 +27,8 @@ users\models.py                                 59     11    81%   8, 16-24, 44,
 users\permissions.py                            16      1    94%   30
 users\serializers.py                            36      2    94%   20-21
 users\services.py                               11      4    64%   11, 19, 31, 41
+users\tasks.py                                  10      0   100%
 users\urls.py                                    8      0   100%
 users\views.py                                  78      4    95%   139-140, 176-177
 --------------------------------------------------------------------------
-TOTAL                                          455     50    89%
+TOTAL                                          513     52    90%
