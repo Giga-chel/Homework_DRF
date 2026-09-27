@@ -16,6 +16,8 @@ drf-spectacular = {extras = ["sidecar"], version = "^0.30.0"}
 stripe = "^15.6.1"
 celery = "^5.6.3"
 redis = "^8.1.0"
+psycopg = {extras = ["binary"], version = "^3.3.6"}
+python-dotenv = "^1.2.3"
 
 
 [build-system]
