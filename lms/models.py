@@ -49,6 +49,7 @@ class Lesson(models.Model):
     def __str__(self):
         return f'{self.name} (Курс: {self.course.name})'
 
+
 class Subscription(models.Model):
     """Подписка пользователя на обновления курса."""
 

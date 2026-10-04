@@ -22,7 +22,7 @@ from django.contrib import admin
 from django.urls import include, path
 
 
-from drf_spectacular.contrib.rest_framework_simplejwt import SimpleJWTScheme
+from drf_spectacular.contrib.rest_framework_simplejwt import SimpleJWTScheme  # noqa: F401
 from drf_spectacular.views import (
     SpectacularAPIView,
     SpectacularRedocView,
