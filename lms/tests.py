@@ -321,6 +321,7 @@ class CourseCRUDTests(LmsBaseTestCase):
         response = self.client.delete(reverse('courses-detail', kwargs={'pk': self.course.pk}))
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+
 class CourseUpdateNotificationTests(APITestCase):
     """Рассылка писем подписчикам при обновлении курса (задание 2 + доп.)."""
 
@@ -360,6 +361,7 @@ class CourseUpdateNotificationTests(APITestCase):
             response = self._patch_course()
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         mock_send_mail.assert_not_called()
+
 
 class DeactivateInactiveUsersTaskTests(APITestCase):
     """Периодическая блокировка неактивных пользователей (задание 3)."""
