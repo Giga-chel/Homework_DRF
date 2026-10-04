@@ -10,8 +10,31 @@ python = "^3.14"
 django = "^6.1"
 djangorestframework = "^3.18.0"
 pillow = "^12.3.0"
+django-filter = "^26.1"
+djangorestframework-simplejwt = "^5.5.1"
+drf-spectacular = {extras = ["sidecar"], version = "^0.30.0"}
+stripe = "^15.6.1"
+celery = "^5.6.3"
+redis = "^8.1.0"
+psycopg = {extras = ["binary"], version = "^3.3.6"}
+python-dotenv = "^1.2.3"
 
 
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "coverage (>=7.16.0,<8.0.0)"
+]
+
+[tool.coverage.run]
+source = ["config", "lms", "users"]
+omit = [
+    "*/migrations/*",
+    "*/tests.py",
+]
+
+[tool.coverage.report]
+show_missing = true
