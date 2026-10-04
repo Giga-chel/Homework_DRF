@@ -51,3 +51,16 @@ PostgreSQL, Redis, Celery (воркер + beat), Docker Compose.
 3. PyCharm — переменные окружения имеют приоритет над .env.
 4. poetry run python manage.py migrate
 5. poetry run python manage.py runserver
+
+## Деплой (CI/CD)
+
+Приложение развёрнуто на VPS (Ubuntu 24.04): Nginx (:80) → Gunicorn → Django,
+PostgreSQL и Redis на localhost, Celery worker + beat — systemd с авточперезапуском.
+
+Пайплайн `.github/workflows/ci_cd.yml`:
+1. Тесты (flake8 + Django-тесты с PostgreSQL/Redis) — на каждый push и PR;
+2. Деплой на сервер по SSH после успешных тестов при push в main:
+   git pull → зависимости → миграции → collectstatic → рестарт сервисов.
+
+Секреты (Settings → Secrets and variables → Actions):
+SSH_HOST, SSH_USER, SSH_PRIVATE_KEY.
