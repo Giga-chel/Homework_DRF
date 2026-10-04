@@ -161,6 +161,7 @@ env.bak/
 venv.bak/
 .env.*
 !.env.example
+!.env.template
 
 # Spyder project settings
 .spyderproject
