@@ -1,5 +1,5 @@
 
-# Homework DRF — учебная платформа (LMS)
+# Homework DRF — учебная платформа (LMS) v2
 
 REST API учебной платформы: курсы, уроки, подписки, платежи (Stripe), пользователи.
 Документация API — Swagger UI (drf-spectacular).
