@@ -58,6 +58,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
         model = User
         exclude = ['password', 'last_login', 'is_superuser', 'is_staff', 'is_active', 'groups', 'user_permissions']
 
+
 class UserPublicSerializer(serializers.ModelSerializer):
     """Общая информация о пользователе — для просмотра чужих профилей.
 
