@@ -35,7 +35,8 @@ class OwnerQuerysetMixin:
 @extend_schema_view(
     list=extend_schema(
         summary='Список курсов',
-        description='Модератору доступны все курсы, остальным — только собственные. Пагинация: ?page, ?page_size (максимум 50).',
+        description='Модератору доступны все курсы, остальным — только собственные. '
+                    'Пагинация: ?page, ?page_size (максимум 50).',
     ),
     create=extend_schema(
         summary='Создание курса',
@@ -108,7 +109,8 @@ class CourseViewSet(OwnerQuerysetMixin, viewsets.ModelViewSet):
 @extend_schema_view(
     get=extend_schema(
         summary='Список уроков',
-        description='Модератору доступны все уроки, остальным — только собственные. Пагинация: ?page, ?page_size (максимум 50).',
+        description='Модератору доступны все уроки, остальным — только собственные. '
+                    'Пагинация: ?page, ?page_size (максимум 50).',
     ),
 )
 class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
@@ -121,7 +123,8 @@ class LessonListAPIView(OwnerQuerysetMixin, generics.ListAPIView):
 @extend_schema_view(
     post=extend_schema(
         summary='Создание урока',
-        description='Доступно всем авторизованным, кроме модераторов. Владелец привязывается автоматически. Ссылка на видео — только youtube.com.',
+        description='Доступно всем авторизованным, кроме модераторов. '
+                    'Владелец привязывается автоматически. Ссылка на видео — только youtube.com.',
         responses={
             201: LessonSerializer,
             400: OpenApiResponse(description='Некорректные данные или запрещённая ссылка на видео'),
@@ -193,6 +196,8 @@ class LessonUpdateAPIView(OwnerQuerysetMixin, generics.UpdateAPIView):
 
         serializer.save()
         Course.objects.filter(pk=course.pk).update(updated_at=timezone.now())
+
+
 class LessonDestroyAPIView(OwnerQuerysetMixin, generics.DestroyAPIView):
     queryset = Lesson.objects.all()
     serializer_class = LessonSerializer

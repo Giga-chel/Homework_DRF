@@ -133,6 +133,7 @@ class UserViewSetTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
+
 class PaymentAPITests(APITestCase):
     """Платежи: авторизация, только свои записи, фильтр и сортировка."""
 
@@ -220,6 +221,7 @@ class ProfileAPITests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['email'], self.user.email)
         self.assertEqual(len(response.data['payments']), 1)
+
 
 class PaymentCreateTests(APITestCase):
     """Создание платежа через Stripe (сервисные функции замоканы)."""
