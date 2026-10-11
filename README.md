@@ -43,24 +43,16 @@ PostgreSQL, Redis, Celery (воркер + beat), Docker Compose.
 * docker compose down                 # остановка, данные сохранятся
 * docker compose down -v              # остановка с удалением данных
 
-## Локальный запуск без Docker (Poetry)
+## Запуск локально (одна команда)
+1. cp .env.template .env — заполнить SECRET_KEY и STRIPE_SECRET_KEY
+2. docker compose up -d --build  (web, nginx, postgres, redis, celery, beat)
+3. docker compose exec web python manage.py createsuperuser
+4. http://localhost/ — приложение, /admin/ — админка
+Остановка: docker compose down (данные в volumes сохраняются).
 
-1. poetry install
-2. Требуются локально запущенные PostgreSQL и Redis. Переменные DB_HOST=localhost
-и CELERY_BROKER_URL=redis://localhost:6379/0 задайте в Run Configuration
-3. PyCharm — переменные окружения имеют приоритет над .env.
-4. poetry run python manage.py migrate
-5. poetry run python manage.py runserver
-
-## Деплой (CI/CD)
-
-Приложение развёрнуто на VPS (Ubuntu 24.04): Nginx (:80) → Gunicorn → Django,
-PostgreSQL и Redis на localhost, Celery worker + beat — systemd с авточперезапуском.
-
-Пайплайн `.github/workflows/ci_cd.yml`:
-1. Тесты (flake8 + Django-тесты с PostgreSQL/Redis) — на каждый push и PR;
-2. Деплой на сервер по SSH после успешных тестов при push в main:
-   git pull → зависимости → миграции → collectstatic → рестарт сервисов.
-
-Секреты (Settings → Secrets and variables → Actions):
-SSH_HOST, SSH_USER, SSH_PRIVATE_KEY.
+## CI/CD и деплой
+- На push/PR: flake8, тесты (postgres/redis как service-контейнеры), сборка Docker-образа.
+- При push в develop после успешных проверок — SSH-деплой на сервер:
+  git pull → docker compose up -d --build → чистка старых образов.
+- Секреты: SSH_HOST, SSH_USER, SSH_PRIVATE_KEY (Settings → Secrets → Actions).
+- Сервер: Docker + Docker Compose, проект в /var/www/lms, серверный .env.
